@@ -1,0 +1,438 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Zap, 
+  Flame, 
+  Wind, 
+  Activity, 
+  Timer, 
+  Target, 
+  ChevronRight, 
+  CheckCircle2, 
+  AlertCircle,
+  Play,
+  RotateCcw,
+  BookOpen,
+  Info
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [simulationSeconds, setSimulationSeconds] = useState(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [quizScore, setQuizScore] = useState(null);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+
+  // Simulation Logic
+  useEffect(() => {
+    let interval;
+    if (isSimulating && simulationSeconds < 60) {
+      interval = setInterval(() => {
+        setSimulationSeconds(prev => prev + 1);
+      }, 1000);
+    } else if (simulationSeconds >= 60) {
+      setIsSimulating(false);
+    }
+    return () => clearInterval(interval);
+  }, [isSimulating, simulationSeconds]);
+
+  const getMetabolicMix = (seconds) => {
+    if (seconds <= 7) return { atp: 85, glycolytic: 10, aerobic: 5 };
+    if (seconds <= 30) return { atp: 20, glycolytic: 65, aerobic: 15 };
+    return { atp: 5, glycolytic: 45, aerobic: 50 };
+  };
+
+  const mix = getMetabolicMix(simulationSeconds);
+
+  // Quiz Data
+  const questions = [
+    {
+      id: 1,
+      q: "Which system is the primary energy source during the first 7 seconds of an explosive rally?",
+      options: ["Aerobic System", "Phosphagen (ATP-CP) System", "Glycolytic System"],
+      correct: 1
+    },
+    {
+      id: 2,
+      q: "What is the primary role of the Aerobic system during 'off-ball' periods?",
+      options: ["Producing lactic acid", "ATP-CP resynthesis and lactate clearance", "Increasing muscle soreness"],
+      correct: 1
+    },
+    {
+      id: 3,
+      q: "What does the 'Anaerobic Threshold' represent?",
+      options: ["Maximum power output", "The transition point from aerobic to anaerobic dominance", "Total lung capacity"],
+      correct: 1
+    }
+  ];
+
+  const handleQuizSubmit = () => {
+    let score = 0;
+    questions.forEach(q => {
+      if (selectedAnswers[q.id] === q.correct) score++;
+    });
+    setQuizScore(score);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-red-600 p-2 rounded-lg text-white shadow-sm">
+              <Activity size={20} />
+            </div>
+            <span className="font-bold text-lg tracking-tight">乒乓球生理代谢 (PhysioPing)</span>
+          </div>
+          <div className="hidden md:flex gap-1">
+            {['overview', 'simulation', 'training', 'quiz'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab ? 'bg-red-50 text-red-600' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {activeTab === 'overview' && (
+          <div className="space-y-12 animate-in fade-in duration-700">
+            {/* Hero */}
+            <header className="text-center py-10">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">
+                Energy Metabolism in Table Tennis
+              </h1>
+              <p className="text-xl text-slate-500 max-w-3xl mx-auto leading-relaxed">
+                An interactive exploration of how the human body fuels the world's fastest sport: 
+                an intermittent, moderate-to-high intensity discipline.
+              </p>
+            </header>
+
+            {/* Core Systems */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { 
+                  title: "Phosphagen (ATP-CP)", 
+                  icon: <Zap className="text-amber-500" />, 
+                  time: "< 7s", 
+                  desc: "Extreme power, instant response. Essential for footwork starts and heavy smashes.",
+                  color: "bg-amber-50",
+                  border: "border-amber-200"
+                },
+                { 
+                  title: "Glycolytic", 
+                  icon: <Flame className="text-orange-600" />, 
+                  time: "30s - 2m", 
+                  desc: "Supports high-frequency rallies. Leads to lactate accumulation and muscle fatigue.",
+                  color: "bg-orange-50",
+                  border: "border-orange-200"
+                },
+                { 
+                  title: "Aerobic", 
+                  icon: <Wind className="text-blue-500" />, 
+                  time: "Long term", 
+                  desc: "The foundation of endurance. Clears metabolic waste and powers the recovery phase.",
+                  color: "bg-blue-50",
+                  border: "border-blue-200"
+                }
+              ].map((sys, i) => (
+                <div key={i} className={`${sys.color} ${sys.border} border p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    {sys.icon}
+                    <h3 className="font-bold text-lg">{sys.title}</h3>
+                  </div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Duration: {sys.time}</p>
+                  <p className="text-slate-600 text-sm leading-relaxed">{sys.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Performance Indicators */}
+            <section className="bg-white rounded-3xl p-8 border border-slate-200">
+              <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
+                <Target className="text-red-600" />
+                Key Physiological Indicators
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { label: "VO2 Max", sub: "Max Oxygen Uptake", text: "The 'ceiling' of your aerobic capacity. Essential for long tournament days." },
+                  { label: "Anaerobic Threshold", sub: "Transition Point", text: "The highest intensity maintainable before performance degrades." },
+                  { label: "Lactate Minimum", sub: "Recovery Balance", text: "The intensity where lactate production and clearance are perfectly balanced." },
+                  { label: "Critical Frequency", sub: "Frequency Limit", text: "The highest striking rate maintainable while keeping technical accuracy." }
+                ].map((item, i) => (
+                  <div key={i} className="group p-5 rounded-xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all">
+                    <h4 className="font-bold text-slate-900">{item.label}</h4>
+                    <p className="text-xs text-red-600 font-medium mb-3">{item.sub}</p>
+                    <p className="text-sm text-slate-500">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'simulation' && (
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                <Timer size={200} />
+              </div>
+
+              <h2 className="text-3xl font-bold mb-2">Metabolic Shift Simulator</h2>
+              <p className="text-slate-500 mb-10">See how your body switches fuels as the rally extends from a quick serve to a marathon exchange.</p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="space-y-8">
+                  <div className="text-center py-6 bg-slate-900 rounded-2xl text-white">
+                    <span className="text-6xl font-mono font-bold">{simulationSeconds}</span>
+                    <span className="text-xl ml-2 text-slate-400">seconds</span>
+                  </div>
+
+                  <div className="flex gap-4">
+                    {!isSimulating ? (
+                      <button 
+                        onClick={() => setIsSimulating(true)}
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg"
+                      >
+                        <Play fill="currentColor" size={20} /> Start Rally
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => setIsSimulating(false)}
+                        className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all"
+                      >
+                        Pause
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => { setSimulationSeconds(0); setIsSimulating(false); }}
+                      className="px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all"
+                    >
+                      <RotateCcw size={20} />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-4">
+                    <div className="text-blue-600"><Info size={24} /></div>
+                    <p className="text-sm text-blue-800 italic">
+                      {simulationSeconds <= 7 
+                        ? "Phase: Explosive. Body uses CP stores for maximum speed." 
+                        : simulationSeconds <= 30 
+                        ? "Phase: Intense. Glycolysis takes over. Heart rate is spiking."
+                        : "Phase: Endurance. Aerobic system stabilizes energy production."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-bold">
+                      <span>Phosphagen (ATP-CP)</span>
+                      <span>{mix.atp}%</span>
+                    </div>
+                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${mix.atp}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-bold">
+                      <span>Glycolytic (Anaerobic)</span>
+                      <span>{mix.glycolytic}%</span>
+                    </div>
+                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500 transition-all duration-500" style={{ width: `${mix.glycolytic}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-bold">
+                      <span>Aerobic (Oxidative)</span>
+                      <span>{mix.aerobic}%</span>
+                    </div>
+                    <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${mix.aerobic}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'training' && (
+          <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+            <h2 className="text-3xl font-bold">Evidence-Based Training Programs</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Zap className="text-amber-500" /> Explosive Recruitment
+                </h3>
+                <ul className="space-y-4">
+                  {[
+                    "5-10m Short-distance Sprints",
+                    "Multi-directional shuttle runs",
+                    "Plyometric jump drills"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
+                      <ChevronRight size={16} className="mt-0.5 text-slate-300" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 p-4 bg-amber-50 rounded-xl text-xs text-amber-800 leading-relaxed border border-amber-100">
+                  <strong>BIOLOGY:</strong> Stimulates phosphagen enzyme activity and improves neuromuscular junction recruitment speed.
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Flame className="text-orange-600" /> Lactate Tolerance (HIIT)
+                </h3>
+                <ul className="space-y-4">
+                  {[
+                    "30s - 60s High-intensity bursts",
+                    "Continuous multi-ball drills",
+                    "Weighted resistance rallies"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
+                      <ChevronRight size={16} className="mt-0.5 text-slate-300" /> {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 p-4 bg-orange-50 rounded-xl text-xs text-orange-800 leading-relaxed border border-orange-100">
+                  <strong>BIOLOGY:</strong> Boosts Lactate Dehydrogenase (LDH) activity and increases the body's buffering capacity for hydrogen ions.
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm md:col-span-2">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Wind className="text-blue-500" /> Aerobic & Recovery Platform
+                </h3>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <ul className="space-y-4">
+                    {[
+                      "Low-intensity long distance running (LISS)",
+                      "Active recovery mobility work",
+                      "Cycling at steady state"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
+                        <ChevronRight size={16} className="mt-0.5 text-slate-300" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="p-4 bg-blue-50 rounded-xl text-xs text-blue-800 leading-relaxed border border-blue-100 h-fit">
+                    <strong>BIOLOGY:</strong> Increases mitochondrial density and capillary volume, ensuring faster CP resynthesis during match intervals.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'quiz' && (
+          <div className="max-w-2xl mx-auto animate-in zoom-in-95 duration-500">
+            <div className="bg-white rounded-3xl p-10 border border-slate-200 shadow-lg">
+              <div className="flex items-center gap-3 mb-8">
+                <BookOpen className="text-red-600" />
+                <h2 className="text-2xl font-bold">Knowledge Assessment</h2>
+              </div>
+
+              {quizScore === null ? (
+                <div className="space-y-10">
+                  {questions.map((q) => (
+                    <div key={q.id}>
+                      <p className="font-bold text-lg mb-4">{q.id}. {q.q}</p>
+                      <div className="space-y-3">
+                        {q.options.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedAnswers(prev => ({ ...prev, [q.id]: idx }))}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                              selectedAnswers[q.id] === idx 
+                                ? 'border-red-600 bg-red-50 text-red-700' 
+                                : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={handleQuizSubmit}
+                    disabled={Object.keys(selectedAnswers).length < questions.length}
+                    className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black transition-colors"
+                  >
+                    Submit Answers
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100 text-green-600 mb-6">
+                    <CheckCircle2 size={48} />
+                  </div>
+                  <h3 className="text-3xl font-extrabold mb-2">Quiz Complete!</h3>
+                  <p className="text-slate-500 mb-8 text-xl">You scored {quizScore} out of {questions.length}</p>
+                  
+                  <div className="text-left space-y-4 mb-10">
+                    {questions.map(q => (
+                      <div key={q.id} className="p-4 rounded-xl border border-slate-100 flex items-start gap-3">
+                        {selectedAnswers[q.id] === q.correct ? (
+                          <CheckCircle2 className="text-green-500 mt-1 shrink-0" size={18} />
+                        ) : (
+                          <AlertCircle className="text-red-500 mt-1 shrink-0" size={18} />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">{q.q}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Correct Answer: <span className="text-green-600 font-bold">{q.options[q.correct]}</span>
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => { setQuizScore(null); setSelectedAnswers({}); }}
+                    className="text-red-600 font-bold hover:underline"
+                  >
+                    Retake Quiz
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="bg-slate-900 text-white py-12 mt-20">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-red-600 p-1.5 rounded text-white">
+                <Activity size={16} />
+              </div>
+              <span className="font-bold text-lg tracking-tight">PhysioPing</span>
+            </div>
+            <p className="text-slate-400 text-sm max-w-xs">
+              Scientific study guide for table tennis energy metabolism and metabolic pathways.
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-slate-500 text-xs uppercase font-bold tracking-widest mb-2">Primary Reference</p>
+            <p className="text-slate-300 text-sm">Deep Report: Energy Metabolism Patterns (Jin Zhengcheng)</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
